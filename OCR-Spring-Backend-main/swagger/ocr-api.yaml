@@ -1,0 +1,3268 @@
+openapi: 3.0.0
+info:
+  title: OCR API
+  description: API for managing OCR apps
+  version: 1.0.0
+
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://localhost
+
+tags:
+  - name: Admin
+    description: Administrative operations
+  - name: Authentication
+    description: Operations related to user authentication
+  - name: Admin Authentication
+    description: Operations related to admin authentication
+  - name: Entry
+    description: Operations related to teleconsultation
+  - name: User
+    description: Operations related to the user's own data
+  - name: User Upload
+    description: Operations related to user uploads  
+  - name: Draft Upload
+    description: Operations related to draft uploads
+  - name: Draft Entry Uploads
+    description: Operations related to Draft Entry Uploads
+  - name: Draft Entry
+    description: Operations related to draft entries
+  - name: Patient Details
+    description: Operations related to patients
+  - name: Dashboard
+    description: Operations related to the dashboard
+  - name: Images
+    description: Operations related to images
+  - name: Storage
+    description: Operations related to storage
+    
+paths:
+  /api/auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: Sign up a new user
+      description: >
+        This endpoint adds a new user signup request. If the registration number or email is already registered,
+        it returns an appropriate message. If a signup request already exists for the registration number or email,
+        it returns a message indicating that. Otherwise, it creates a new signup request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/SignupSuccess"
+                  - $ref: "#/components/schemas/SignupExists"
+        "401":
+          description: Registration number or email is already registered
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/RegNoError"
+                  - $ref: "#/components/schemas/EmailError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/auth/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify a user
+      description: >
+        This endpoint verifies a user signup request. If the request is valid, it sends an email to the user.
+        If the request is not found, it returns an error message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginSuccess"
+
+        "400":
+          description: User is not registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotRegisteredError"
+
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/auth/refreshToken:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: >
+        This endpoint refreshes the access token using a provided refresh token.
+      responses:
+        "200":
+          description: >
+            Refresh token successful.
+            Note: Although a 200 status code is not explicitly set in the code, this response is implied for successful refresh token operations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshTokenSuccess"
+        "400":
+          description: Token is required or an error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshTokenError"
+
+  /api/auth/revokeToken:
+    post:
+      tags:
+        - Authentication
+      summary: Revoke a token
+      description: >
+        This endpoint revokes an access or refresh token. The token can be provided in the request body or in cookies.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevokeTokenRequest"
+      responses:
+        "200":
+          description: >
+            Token revoked successfully.
+            Note: Although a 200 status code is not explicitly set in the code, this response is implied for successful revocation operations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevokeTokenSuccess"
+        "400":
+          description: Token is required or an error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevokeTokenError"
+        "403":
+          description: User is not authorized to revoke this token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+
+  /api/user/patient/update/{id}:
+    post:
+      tags:
+        - Patient Details
+      summary: Update patient Details
+      description: >
+        This endpoint updates the details of a patient. If the patient is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientUpdate"
+      responses:
+        "200":
+          description: Successfully updated patient details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+        "401":
+          description: Unauthorized acccess
+        "500":
+          description: Internal server error
+  
+  /api/user/patient/get:
+    get:
+      tags:
+        - Patient Details
+      summary: Get all patients
+      description: >
+        This endpoint returns a list of all patients. It supports pagination and search.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List op patients
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patients:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Patient"  
+        "401":
+          description: Unauthorized acccess
+        "500":
+          description: Internal server error
+
+  /api/user/patient/check/{id}:
+    get:
+      tags:
+        - Patient Details
+      summary: Check if patient exists
+      description: >
+        This endpoint checks if a patient exists. If the patient is found, it returns a boolean value.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: patient exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+        "401":
+          description: Unauthorized acccess
+        "500":
+          description: Internal server error
+
+  /api/user/patient/{id}:
+    get:
+      tags:
+        - Patient Details
+      summary: get one patient
+      description:
+        This endpoint returns the details of a patient. If the patient is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: patient details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+        "401":
+          description: Unauthorized acccess
+        "404":
+          description: Patient not found
+        "500":
+          description: Internal server error
+
+  /api/user/patient/shared/{id}:
+    get:
+      tags: 
+        - Patient Details 
+      summary: get one shared patient
+      description: >
+        This endpoint returns the details of a shared patient. If the patient is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: shared patient details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+        "401":
+          description: Unauthorized acccess
+        "404":
+          description: Patient not found
+        "500":
+          description: Internal server error
+
+  /api/user/reviewer/all:
+    get:
+      tags: 
+        - User
+      summary: Get all reviewers
+      description: >
+        This endpoint returns a list of all reviewers. If no reviewers are found, it returns an error message.
+      responses:
+        "200":
+          description: List of reviewers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewerDetails'
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Reviewers not found
+        "500":
+          description: Internal Server Error
+  
+  /api/admin/auth/signup:
+    post:
+      tags: 
+        - Admin Authentication
+      summary: To add the initial admin
+      description: >
+        This endpoint adds the initial admin to the system. If the admin already exists, it returns an error message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:  
+              $ref: "#/components/schemas/NewAdminSignUp"
+      responses: 
+        "200":
+          description: "Successfully signed in"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewAdminSignUpResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal Server Error!"
+                  error:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
+  /api/admin/requests:
+    get:
+      summary: Get all requests
+      tags:
+        - Admin
+      description: >
+        This endpoint returns a list of all requests. If no requests are found, it returns an error message.
+      responses:
+        "200":
+          description: "Images Uploaded Successfully"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Request"
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/requests/{id}:
+    get:
+      summary: Get one request by ID
+      tags:
+        - Admin
+      description: >
+        This endpoint returns the details of a request. If the request is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the request to retrieve
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Request"
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+        "404":
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestNotFoundResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+    post: 
+      summary: Reject a request
+      tags:
+        - Admin
+      description:
+        This endpoint deletes a request. If the request is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the request to reject
+      responses:
+        "200":
+          description: Request deleted and email has been sent
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+        "404":
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestNotFoundResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/accept/{id}:
+    post:
+      tags:
+        - Admin
+      summary: Accept a request
+      description: >
+        This endpoint accepts a request. If the request is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the request to accept
+      responses:
+        "200":
+          description: Request acceptance response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: User registration successful
+                    $ref: "#/components/schemas/SuccessResponse"
+                  - description: User registration successful but email notification failed
+                    $ref: "#/components/schemas/PartialSuccessResponse"
+        "401":
+          description: Unauthorized access or conflict in registration
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Permission denied
+                    $ref: "#/components/schemas/UnauthorizedResponse"
+                  - description: Registration number not in use
+                    $ref: "#/components/schemas/RegNotInUseResponse"
+                  - description: Email address already in use
+                    $ref: "#/components/schemas/EmailInUseResponse"
+        "404":
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestNotFoundResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Error during registration
+                    $ref: "#/components/schemas/RegistrationFailedResponse"
+                  - description: Error during email notification
+                    $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/users/role/{role}:
+    get:
+      tags:
+        - Admin
+      summary: Get users by role with read-write access permission
+      description: >
+        This endpoint returns a list of users with the specified role. If no users are found, it returns an error message.
+      parameters:
+        - in: path
+          name: role
+          required: true
+          schema:
+            type: string
+          description: The role to filter users by
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/roles:
+    get:
+      tags:
+        - Admin
+      summary: get all user roles
+      description: >
+        This endpoint returns a list of all user roles. If no roles are found, it returns an error message.
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "500":
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+    post:
+      summary: create a new role
+      tags:
+        - Admin
+      description: >
+        This endpoint creates a new role. If the role already exists, it returns an error message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "500":
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/roles/{id}:
+    get:
+      tags:
+        - Admin
+      summary: get one user by role
+      description: >
+        This endpoint returns the details of a user with the specified role. If the user is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The role to filter users by
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "404":
+          description: role not found
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/RequestNotFoundResponse"
+
+        "500": 
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+  
+  /api/admin/update/user/{id}:
+    post:
+      summary: update user details
+      tags:
+        - Admin
+      description: >
+        This endpoint updates the details of a user. If the user is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the user to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/details"
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/details"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "404":
+          description: user not found
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/RequestNotFoundResponse"
+
+        "500": 
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/delete/user/{id}:
+    post:
+      summary: delete user
+      tags:
+        - Admin
+      description: > 
+        This endpoint deletes a user. If the user is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the user to delete
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/userdelete"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "404":
+          description: user not found
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/RequestNotFoundResponse"
+
+        "500": 
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/hospital:
+    post:
+      summary: create a new hospital
+      tags:
+        - Admin
+      description: >
+        This endpoint creates a new hospital. If the hospital already exists, it returns an error message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/hospital"
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/hospitaladded"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/hospitalalreadyadded"
+
+        "500":
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                oneOf:
+                  - description: hospital addition failed
+                    $ref: "#/components/schemas/hospitaladedfailed"
+                  - description: Internal server error
+                    $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/hospitals/update/{id}:
+    post:
+      summary: update hospital details
+      tags:
+        - Admin
+      description: >
+        This endpoint updates the details of a hospital. If the hospital is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the hospital to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/hospital"
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/hospitaladded"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Unauthorized access
+                    $ref: "#/components/schemas/UnauthorizedResponse"
+                  - description: hospital addition failed
+                    $ref: "#/components/schemas/hospitaladedfailed" 
+
+        "404":
+          description: hospital not found
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/RequestNotFoundResponse"
+
+        "500": 
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                oneOf:
+                  - description: hospital addition failed
+                    $ref: "#/components/schemas/hospitaladedfailed"
+                  - description: Internal server error
+                    $ref: "#/components/schemas/InternalServerErrorResponse"
+                
+  /api/admin/hospitals/delete/{id}:
+    post:
+      summary: delete hospital
+      tags:
+        - Admin
+      description: > 
+        This endpoint deletes a hospital. If the hospital is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the hospital to delete
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/hospitaldeleted"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "404":
+          description: hospital not found
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/hospitalnotfound"
+
+        "500": 
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/hospitals/{id}:
+    description: >
+      This endpoint returns the details of a hospital. If the hospital is not found, it returns an error message.
+    get:
+      summary: get one hospital by id
+      tags:
+        - Admin
+      description: >
+        This endpoint returns the details of a hospital. If the hospital is not found, it returns an error message.
+    
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the hospital to retrieve
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/hospital"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "404":
+          description: hospital not found
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/hospitalnotfound"
+
+        "500": 
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/option/{name}:
+    get:
+      summary: get options
+      tags:
+        - Admin
+      description: >
+        This endpoint returns the details of an option. If the option is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+          description: The name of the hospital to retrieve
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/hospital"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+        "404":
+          description: hospital not found
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/hospitalnotfound"
+
+        "500": 
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+
+  /api/admin/option:
+    post:
+      summary: only to add options by tech team
+      tags:
+        - Admin
+      description: >
+        This endpoint creates a new option. If the option already exists, it returns an error message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/option"
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/optionsaved"
+        
+        "401":
+          description: unauthorized access
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/optioinalreadexist"
+
+        "500":
+          description: internal server error
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/InternalServerErrorResponse"
+  
+  /api/dashboard/percentages:
+    get:
+      tags: 
+        - Dashboard 
+      summary: Get the percentage of risk habits
+      description: >
+        This endpoint returns the percentage of risk habits. If no data is found, it returns an error message.
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RiskHabitPercentage"
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/dashboard/totals:
+    get:
+      tags: 
+        - Dashboard
+      summary: Get the total number of doctors, images and patients
+      description: >
+        This endpoint returns the total number of doctors, images and patients. If no data is found, it returns an error message.
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  doctors:
+                    type: integer
+                    description: Number of doctors
+                    example: 10
+                  images:
+                    type: integer
+                    description: Number of images
+                    example: 100
+                  patients:
+                    type: integer
+                    description: Number of patients
+                    example: 1000
+                    $ref: "#/components/schemas/TotalCounts"
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /api/image/update:
+    post: 
+      tags: 
+        - Images
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageUpdateRequest'
+      summary: update image
+      description: >
+        This endpoint updates the details of an image. If the image is not found, it returns an error message.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Image"
+        "500":
+          description: Internal Server Error
+  
+  /api/user/draftentry/add/{id}:
+    post:
+      tags: 
+        - Draft Entry
+      summary: Add a draft Entry
+      description: >
+        This endpoint adds a draft Entry. If the patient is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+                complaint:
+                  type: string
+                findings:
+                  type: string
+                current_habits:
+                  type: string
+      responses:
+        "200":
+          description: Draft Entry added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftEntry"
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Patient not registered
+        "500":
+          description: Internal Server Error
+
+  /api/user/draftentry/get:
+    get:
+      tags: 
+        - Draft Entry
+      summary: Get all draft entries added by the user
+      description: >
+        This endpoint returns a list of all draft entries added by the user. It supports pagination and search.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: filter
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of draft entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DraftEntry"
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal Server Error
+
+  /api/user/draftentry/get/patient/{id}:
+    get:
+      tags: 
+        - Draft Entry
+      description: >
+        This endpoint returns a list of all draft entries for a specific patient. It supports pagination and search.
+      summary: Get all draft entries for a specific patient
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: filter
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of draft entries for the patient
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DraftEntry"
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal Server Error
+
+  /api/user/draftentry/get/{id}:
+    get:
+      tags: 
+        - Draft Entry
+      summary: Get details of a specific draft entry
+      description: >
+        This endpoint returns the details of a specific draft entry. If the draft entry is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Details of the draft entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftEntry"
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Draft entry not found
+        "500":
+          description: Internal Server Error
+
+  /api/user/entry/add/{id}:
+    post:
+      tags:
+        - Entry
+      summary: Add a telecunsultation entry
+      description: >
+        This endpoint adds a Entry. If the patient is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The patient id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  complaint:
+                    type: string
+                  findings:
+                    type: string
+                  current_habits:
+                    type: string  
+      responses:
+        "200":
+          description: telecunsultation entry created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeleConEntry" 
+        "401":
+          description: Unauthorized access
+        "404" :
+          description: Patient not found
+        "500":
+          description: Internal server error    
+
+  /api/user/entry/get:
+    get:
+      tags:
+        - Entry
+      summary: get all entries added by user
+      description: >
+        This endpoint returns a list of all teleconsultation entries added by the user. It supports pagination and search.
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: page number for pagination
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [created Date,updated Date,Assigned,Unassigned,Reviewed,Unreviewed]
+          description: filter for entries
+      responses:
+        "200":
+          description: A list of telecunsultation entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeleConEntry"
+        "401":
+          description: Unauthorized access
+        "500":  
+          description: Internal server error
+
+  /api/user/entry/get/patient/{id}:
+    get:
+      tags:
+        - Entry
+      summary: Get patient's entries
+      description: >
+        This endpoint returns a list of all teleconsultation entries for a specific patient. It supports pagination and search.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The patient Id
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: page number for pagination
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [created Date,updated Date]
+          description: filter for entries
+      responses:
+        "200":
+          description: A list of telecunsultation entries for the patient
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeleConEntry"
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
+  
+  /api/user/entry/shared/patient/{id}:
+    get:
+      tags:
+        - Entry
+      summary: Get shared patient's entries(view only)
+      description: >
+        This endpoint returns a list of all shared teleconsultation entries for a specific patient. It supports pagination and search.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The patient Id
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: page number for pagination
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [created Date,updated Date]
+          description: filter for entries
+      responses:
+        "200":
+          description: A list of telecunsultation entries for the patient
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeleConEntry"
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
+
+  /api/user/entry/get/{id}:
+    get:
+      tags:
+        - Entry
+      summary: get one entry details added by users
+      description: >
+        This endpoint returns the details of a Entry. If the entry is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The entry Id
+       
+      responses:
+        "200":
+          description: telecunsultation entry details
+          content:
+            application/json:
+              schema:
+               $ref: "#/components/schemas/TeleConEntry"
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
+
+  /api/user/entry/count/newreviews:
+    get:
+      tags: 
+        - Entry
+      summary: get count of new reviews
+      description: >
+        This endpoint returns the count of new reviews. If no reviews are found, it returns an error message.
+      responses:
+        "200":
+          description: count of new reviews
+          content:
+            application/json:
+              schema:
+                type: integer
+                example: 5
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
+      
+  /api/user/entry/count/newentries:
+    get:
+      tags: 
+        - Entry 
+      summary: get unreviewed entry count
+      description: >
+        This endpoint returns the count of unreviewed entries. If no unreviewed entries are found, it returns an error message.
+      responses:
+        "200":
+          description: count of unreviewed entries
+          content:
+            application/json:
+              schema:
+                type: integer
+                example: 4
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
+
+  /api/user/entry/reviewer/add/{id}:
+    post:
+      tags: 
+        - Entry
+      summary: Add a reviewer by user
+      description: >
+        This endpoint adds a reviewer to an entry. If the entry is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: Id
+          schema:
+            type: string
+          required: true
+          description: The entry Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  reviewer_id:
+                    type: string
+                    example: 5f7b1b3b7f3b9b0017b3b9b0
+      responses:
+        "200":
+          description: reviewer added successfully
+        "401":
+          description: Unauthorized access
+        "404" :
+          description: Entry not found
+        "500":
+          description: Internal server error
+
+  /api/user/entry/reviewer/remove/{id}:
+    post:
+      tags: 
+        - Entry
+      description: >
+        This endpoint removes a reviewer from an entry. If the entry is not found, it returns an error message.
+      summary: remove a reviewer by user
+      parameters:
+        - in: path
+          name: Id
+          schema:
+            type: string
+          required: true
+          description: The entry Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  reviewer_id:
+                    type: string
+                    example: 5f7b1b3b7f3b9b0017b3b9b0
+      responses:
+        "200":
+          description: reviewer removed successfully
+        "401":
+          description: Unauthorized access
+        "404" :
+          description: Entry not found
+        "500":
+          description: Internal server error
+  
+  /api/user/entry/delete/{id}:
+    post:
+      tags: 
+        - Entry
+      summary: delete a telecunsultation entry within 24 hours(after 24 hours cannot delete)
+      description: >
+        This endpoint deletes a Entry. If the entry is not found, it returns an error message.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The entry Id
+      responses:
+        "200":
+          description: telecunsultation entry deleted successfully
+        "401":
+          description: Unauthorized access
+        "404" :
+          description: Entry not found
+        "500":
+          description: Internal server error
+      
+  /api/user/entry/shared/all:
+    get:
+      tags:
+        - Entry
+      summary: Get all shared entries
+      description: >
+        This endpoint returns a list of all shared teleconsultation entries. It supports pagination and search.
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: page number for pagination
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [All,Reviewed,Unreviewed]
+          description: filter for entries
+      responses:
+        "200":
+          description: A list of shared telecunsultation entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeleConEntry"
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal server error
+
+  /api/user/entry/shared/{id}:
+    get:
+      tags:
+        - Entry
+      summary: Get one shared entry (view only)
+      description: >
+        This endpoint returns the details of a shared Entry. If the entry is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entry ID
+          schema:
+            type: string
+      responses:
+        200:
+          description: Entry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeleConEntry'
+        401:
+          description: Unauthorized access
+        404:
+          description: Entry not found
+        500:
+          description: Internal Server Error
+
+  /api/user/entry/shared/data/{id}:
+    get:
+      tags:
+        - Entry
+      summary: Get assigned entry details
+      description: >
+        This endpoint returns the details of a shared Entry with assignment data. If the entry is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the assignment
+      responses:
+        200:
+          description: Detailed Entry with assignment data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeleConEntryWithAssignment'
+        401:
+          description: Unauthorized access
+        404:
+          description: Entry not found
+        500:
+          description: Internal Server Error
+
+  /api/user/entry/reviews/{id}:
+    get:
+      summary: Get reviews of a Entry
+      tags:
+        - Entry
+      description:
+        This endpoint returns a list of reviews for a specific Entry. If no reviews are found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the Entry
+      responses:
+        200:
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        401:
+          description: Unauthorized access
+        404:
+          description: Entry not found
+        500:
+          description: Internal Server Error
+
+  /api/user/entry/reviewer/change/{id}:
+    post:
+      summary: Change the reviewer of an assignment
+      tags:
+        - Entry
+      description:
+        This endpoint allows users to change the reviewer of an assignment. If the assignment is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reviewer_id:
+                  type: string
+                  description: The ID of the new reviewer
+      responses:
+        200:
+          description: Reviewer assigned successfully
+        401:
+          description: Unauthorized access
+        404:
+          description: Entry not found
+        500:
+          description: Internal Server Error
+
+  /api/user/entry/review/{id}:
+    post:
+      summary: Add a new review to a Entry
+      tags:
+        - Entry
+      description:
+        This endpoint allows users to add a new review to a Entry. If the entry is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provisional_diagnosis:
+                  type: string
+                management_suggestions:
+                  type: string
+                referral_suggestions:
+                  type: string
+                other_comments:
+                  type: string
+      responses:
+        200:
+          description: Review added successfully
+        401:
+          description: Unauthorized access
+        404:
+          description: Entry not found
+        500:
+          description: Internal Server Error
+
+  /api/user/entry/mark/{id}:
+    post:
+      summary: Mark an assignment as read
+      tags:
+        - Entry
+      description:
+        This endpoint allows users to mark an assignment as read. If the assignment is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the assignment
+      responses:
+        200:
+          description: Marked as read
+        401:
+          description: Unauthorized access
+        500:
+          description: Internal Server Error
+
+  /api/user/entry/open/{id}:
+    post:
+      summary: Mark a Entry as read
+      tags:
+        - Entry
+      description:
+        This endpoint allows users to mark a Entry as read. If the entry is not found, it returns an error message.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the Entry
+      responses:
+        200:
+          description: Marked as read
+        401:
+          description: Unauthorized access
+        500:
+          description: Internal Server Error
+          
+  /api/user/self:
+    get:
+      summary: Get a user
+      tags:
+        - User
+      description: >
+        This endpoint returns the details of the authenticated user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+          
+  /api/user/self/hospitals:
+    get:
+      description: >
+        This endpoint returns the list of hospitals available for the user to select.
+      summary: Get hospital list on signup page
+      tags:
+        - User
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/hospital"
+        "500":
+          description: Internal Server Error
+  
+  /api/user/self/update:
+    post:
+      summary: Update a user
+      tags:
+        - User
+      description: >
+        This endpoint allows users to update their details. If the user is not found, it returns an error message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: User details updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error            
+
+  /api/user/draftentry/upload/images/{id}:
+    post:
+      tags:
+        - Draft Entry Uploads
+      summary: Upload images for a draft entry
+      description: Allows authenticated users to upload multiple images for a specific draft Entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                data:
+                  type: string
+                  description: JSON string containing image metadata
+      responses:
+        "200":
+          description: Images uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DraftImage"
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Entry not found
+        "500":
+          description: Internal Server Error
+
+  /api/user/draftentry/upload/reports/{id}:
+    post:
+      tags:
+        - Draft Entry Uploads
+      summary: Upload reports for a draft entry
+      description: Allows authenticated users to upload multiple reports for a specific draft Entry.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                data:
+                  type: string
+                  description: JSON string containing report metadata
+      responses:
+        "200":
+          description: Reports uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DraftReport"
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized access
+        "404":
+          description: Entry not found
+        "500":
+          description: Internal Server Error
+
+  /api/user/upload/images/{id}:
+    post:
+      tags:
+        - User Upload
+      summary: Upload images for teleconsultation entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The object ID of the teleconsultation entry
+        - name: _id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: The header _id after going through authentication process
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: string
+                  format: binary
+                  description: The image file to upload
+                data:
+                  type: string
+                  description: JSON string containing image metadata
+                  $ref: "#/components/schemas/Image"
+      responses:
+        "200":
+          description: "Images Uploaded Successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      type: string
+                      description: Image data containing JASON string
+                      $ref: "#/components/schemas/imageUploadResponse"
+                  message:
+                    type: string
+                    example: "Images Uploaded Successfully"
+
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal Server Error
+                  error:
+                    type: string
+        "404":
+          description: "Entry Not Found"
+  
+  /api/user/upload/reports/{id}:
+    post:
+      tags:
+        - User Upload
+      summary: Upload reports for teleconsultation entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The object ID of the teleconsultation entry
+        - name: _id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: The header _id after going through authentication process
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: string
+                  format: binary
+                  description: The report file to upload
+                data:
+                  type: string
+                  description: JSON string containing report metadata
+                  $ref: "#/components/schemas/Report"
+      responses:
+        "200":
+          description: "Reports Uploaded Successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      type: string
+                      description: Report data containing JASON string
+                      $ref: "#/components/schemas/imageUploadResponse"
+                  message:
+                    type: string
+                    example: "reports Uploaded Successfully"
+
+        "401":
+          description: Unauthorized access
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal Server Error
+                  error:
+                    type: string
+        "404":
+          description: "Entry Not Found"
+  
+  /api/user/upload/patient:
+    post:
+      tags:
+        - User Upload
+      summary: add new patient with consent form
+      parameters:
+        - name: _id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: The header _id after going through authentication process
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                patient_id:
+                  type: string
+                  description: The patient ID
+                files:
+                  type: string
+                  format: binary
+                  description: The consent form to upload
+                data:
+                  type: string
+                  description: JSON string containing report metadata
+                  $ref: "#/components/schemas/Patient"
+      responses:
+        "200":
+          description: Consent form Uploaded Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      type: string
+                      description: patient data containing JASON string
+                      $ref: "#/components/schemas/consentFormUploadResponse"
+
+        "401":
+          description: "Patient ID already exists"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal Server Error
+                  error:
+                    type: string
+
+  /Storage:
+    get:
+      tags:
+        - Storage
+      summary: Serve static files from the /Storage directory
+      description: Serves static files located in the /Storage directory.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  
+  /Storage/images:
+    get:
+      tags:
+        - Storage
+      summary: Serve static files from the /Storage/images directory
+      description: Serves static files located in the /Storage/images directory.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  
+  /Storage/reports:
+    get:
+      tags:
+        - Storage
+      summary: Serve static files from the /Storage/reports directory
+      description: Serves static files located in the /Storage/reports directory.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        username: 
+          type: string
+        email:
+          type: string
+        reg_no:
+          type: string
+        hospital:
+          type: string
+        designation:
+          type: string
+        contact_no:
+          type: string
+        availability:
+          type: string
+        role:
+          type: string
+    
+    hospital:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        contact_no:
+          type: string
+          
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        hospital:
+          type: string
+        contact_no:
+          type: string
+        availability:
+          type: boolean
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          description: Email address
+          example: johndoe@example.com
+        password:
+          type: string
+          description: Password
+          example: "yourpassword"
+
+    SignupRequest:
+      type: object
+      required:
+        - reg_no
+        - username
+        - email
+      properties:
+        reg_no:
+          type: string
+          description: Registration number
+          example: ABC123
+        username:
+          type: string
+          description: Username
+          example: johndoe
+        email:
+          type: string
+          description: Email address
+          example: johndoe@example.com
+        hospital:
+          type: string
+          description: Name of the hospital
+          example: General Hospital
+        designation:
+          type: string
+          description: Designation of the user
+          example: Doctor
+        contact_no:
+          type: string
+          description: Contact number
+          example: "+1234567890"
+
+    SignupSuccess:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: Email address
+        reg_no:
+          type: string
+          description: Registration number
+        hospital:
+          type: string
+          description: Name of the hospital
+        designation:
+          type: string
+          description: Designation of the user
+        contact_no:
+          type: string
+          description: Contact number
+        _id:
+          type: string
+          description: User ID
+        createdAt:
+          type: string
+          description: Date of creation
+        updatedAt:
+          type: string
+          description: Date of last update
+        message:
+          type: string
+          description: Success message
+          example: "Request is sent successfully. You will receive an Email on acceptance."
+
+    SignupExists:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Message indicating an existing request
+          example: "A request for registration already exists."
+
+    RegNoError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message for registered registration number
+          example: "The Reg No is already registered"
+
+    EmailError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message for registered email address
+          example: "Email address is already registered"
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Internal Server Error!"
+        error:
+          type: string
+          description: Detailed error information
+          example: "Detailed error information here."
+    
+    userref:
+          type: object
+          description: User reference details
+          properties:
+            _id:
+              type: string
+              description: User ID
+              example: "60b6b3b8f9c0c40015c10f5a"
+            username:
+              type: string
+              description: Username
+              example: "johndoe"
+            email:
+              type: string
+              description: User's email address
+              example: "johndoe@example.com"
+            reg_no:
+              type: string
+              description: Registration number
+              example: "1"
+            hospital:
+              type: string
+              description: Name of the hospital
+              example: "Colombo Hospital"
+            designation:
+              type: string
+              description: Designation of the user
+              example: "Doctor"
+            contact_no:
+              type: string
+              description: Contact number
+              example: "+1234567890"
+            password:
+              type: string
+              description: Encrypted password
+              example: "$2a$10$3Q"
+            availability:
+              type: boolean
+              description: Availability status
+              example: true
+            role:
+              type: string
+              description: User's role
+              example: "admin"
+            createdAt:
+              type: string
+              description: Date of creation
+              example: "2021-06-01T12:00:00.000Z"
+            updatedAt:
+              type: string
+              description: Date of last update
+              example: "2021-06-01T12:00:00.000Z" 
+            message:
+              type: string
+              description: Success message
+              example: "Successfully logged in"
+            permissions: 
+              type: array
+              example: [300]
+
+    LoginSuccess:
+      type: object
+      properties:
+        accessToken:
+          type: object
+          properties:
+            token:
+              type: string
+              description: Access token
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            expiry:
+              type: string
+              description: Token expiry time
+              example: "1h"
+        ref:
+          description: User reference details
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/userref"
+        others:
+          description: User reference details
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/userref"
+      
+    UserNotRegisteredError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message indicating the user is not registered
+          example: "User is not registered!"
+
+    RefreshTokenSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Refresh token successful"
+        ref:
+          type: object
+          description: User reference details
+          properties:
+            _id:
+              type: string
+              example: "60b6b3b8f9c0c40015c10f5a"
+            username:
+              type: string
+              example: "johndoe"
+            email:
+              type: string
+              example: "johndoe@example.com"
+            reg_no:
+              type: string
+              example: "1"
+            hospital:
+              type: string
+              example: "Colombo Hospital"
+            designation:
+              type: string
+              example: "Doctor"
+            contact_no:
+              type: string
+              example: "+1234567890"
+            password:
+              type: string
+              example: "$2a$10$3Q"
+            availability:
+              type: boolean
+              example: true
+            role:
+              type: string
+              example: "admin"
+            createdAt:
+              type: string
+              example: "2021-06-01T12:00:00.000Z"
+            updatedAt:
+              type: string
+              example: "2021-06-01T12:00:00.000Z" 
+        permissions:
+          type: array
+          items:
+            type: integer
+          description: List of user permissions
+          example: [300]
+        accessToken:
+          type: object
+          properties:
+            token:
+              type: string
+              description: Access token
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            expiry:
+              type: string
+              description: Token expiry time
+              example: "1h"
+
+    RefreshTokenError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "Token is required"
+        error:
+          type: string
+          description: Detailed error information
+          example: "Detailed error information here."
+
+    RevokeTokenRequest:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: Access token to revoke
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    RevokeTokenSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Token revoked"
+
+    RevokeTokenError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "Token is required"
+
+    UnauthorizedError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "You are not authorized to revoke this token"
+    
+    Patient:
+      type: object
+      properties:
+        patient_id:
+          type: string
+        clinician_id:
+          type: string
+        patinent_name:
+          type: string
+        rist_factors:
+          type: array
+        DOB: 
+          type: string
+        gender:
+          type: string
+        histo_diagnosis:
+          type: string
+        medical_history:
+          type: array
+        family_history:
+          type: array
+        systemic_disease:
+          type: array
+        contact_no:
+          type: string
+        consent_form:
+          type: string
+
+    PatientUpdate:
+      type: object
+      properties:
+        patient_name:
+          type: string
+        gender:
+          type: string
+        DOB:
+          type: string
+        risk_factors:
+          type: string
+        histo_diagnosis:
+          type: string
+        contact_no:
+          type: string
+        systemic_disease:
+          type: string
+        family_history:
+          type: string
+        medical_history:
+          type: string
+
+    ReviewerDetails:
+      type: object
+      properties:
+        telecon_entry_id: 
+          type: string
+        reviewer_id:
+          type: string
+        provisional_diagnosis:
+          type: string
+        management_suggestions:
+          type: string
+        referral_suggestions:
+          type: string
+        other_comments:
+          type: string
+    
+    NewAdminSignUp:
+      type: object
+      properties:
+        reg_no:  
+          type: integer
+          description: clinician reg_no
+          example: 96905
+        username: 
+          type: string
+          description: clinician name
+          example: "Nethmini Karunarathne"
+        email: 
+          type: string
+          description: clinician email
+          example: "e20189@eng.pdn.ac.lk"
+        hospital: 
+          type: string
+          description: clinician hospital
+          example: "Peradeniya Teaching Hospital"
+    
+    NewAdminSignUpResponse:
+      type: object
+      properties:
+        username: 
+          type: string
+          example: "Nethmini Karunarathne"
+        email: 
+          type: string
+          example: "e20189@eng.pdn.ac.lk"
+        reg_no: 
+          type: string
+          example: "96964"
+        hospital: 
+          type: string
+        designation: 
+          type: string
+          example: ""
+        contact_no: 
+          type: string
+          example: ""
+        availability: 
+          type: boolean
+          example: true
+        role: 
+          type: string
+          example: "System Admin"
+        _id: 
+          type: string
+          example: "60b6b3b8f9c0c40015c10f5a"
+        createdAt: 
+          type: string
+          example: "2024-07-11T01:35:29.190Z"
+        updatedAt: 
+          type: string
+          example: "2024-07-11T01:35:29.190Z" 
+        message: 
+          type: string
+          example: "Successfully signed in"
+
+    Request:
+      type: object
+      properties:
+        username:
+          type: string 
+        email:
+          type: string
+          uniqueItems: true
+        reg_no:
+          type: string
+          uniqueItems: true
+        hospital:
+          type: string
+        designation:
+          type: string
+        contact_no:
+          type: string
+      
+    Role:
+      type: object
+      properties:
+        role:
+          type: string
+        permission:
+          type: array
+          default: []
+
+    details:
+      type: object
+      properties:
+        username: 
+          type: string
+        email:
+          type: string
+        reg_no:
+          type: string
+        hospital:
+          type: string
+        designation:
+          type: string
+        contact_no:
+          type: string
+        availability:
+          type: string
+        role:
+          type: string
+        message:
+          type: string
+          default: "user details updated successfully"
+
+    userdelete:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "user deleted successfully"
+      
+    hospitaldeleted:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "hospital deleted successfully"
+    
+    hospitalnotfound:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "hospital not found"
+
+    hospitaldeletionfailed:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "hospital deletion failed"
+
+    option:
+      type: object
+      properties:
+        name:
+          type: string
+        options:
+          type: array
+          default: []
+    
+    optionsaved:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "option is saved"
+
+    SuccessResponse:
+      type: object
+      properties:
+        username: 
+          type: string
+        email:
+          type: string
+        reg_no:
+          type: string
+        hospital:
+          type: string
+        designation:
+          type: string
+        contact_no:
+          type: string
+        availability:
+          type: string
+        role:
+          type: string
+        message:
+          type: string
+          default: "Request accepted successfully"
+
+    PartialSuccessResponse:
+      type: object
+      properties:
+        username: 
+          type: string
+        email:
+          type: string
+        reg_no:
+          type: string
+        hospital:
+          type: string
+        designation:
+          type: string
+        contact_no:
+          type: string
+        availability:
+          type: string
+        role:
+          type: string
+        message:
+          type: string
+          default: "Request accepted successfully but email notification failed"
+    
+    UnauthorizedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "Unauthorized access"
+
+    RegNotInUseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "Registration number not in use"
+
+    EmailInUseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "Email address already in use"
+
+    RequestNotFoundResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "Request not found"
+
+    RegistrationFailedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "Registration failed"
+
+    InternalServerErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "Internal server error"
+
+    hospitaladded:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "hospital added successfully"
+
+    hospitaladedfailed:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "hospital addition failed"
+    
+    hospitalalreadyadded:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "hospital already added"
+
+    optioinalreadexist:
+      type: object
+      properties:
+        message:
+          type: string
+          default: "option already exist"
+
+    RiskHabitPercentage:
+      type: object
+      properties:
+        item:
+          type: string
+          description: Name of the risk habit
+          example: Smoking
+        percentage:
+          type: number
+          description: >
+            Percentage of patients with this habit.
+            Example: If there are 100 patients and 20 of them have the 'Smoking' habit, the percentage is 20%.
+          example: 20
+
+    TotalCounts:
+      type: object
+      properties:
+        doctors:
+          type: integer
+          description: Total number of doctors
+          example: 10
+        patients:
+          type: integer
+          description: Total number of patients
+          example: 50
+        images:
+          type: integer
+          description: Total number of images
+          example: 100    
+    
+    Image:
+      type: object
+      properties:
+        telecon_entry_id:
+          type: string
+        image_name:
+          type: string
+        loacation:
+          type: string
+        lesions_appear:
+          type: boolean
+          default: false
+        annotation:
+          type: array
+          default: []
+        predicted_vat:
+          type: string
+    
+    Report:
+      type: object
+      properties:
+        telecon_entry_id:
+          type: string
+        report_name:
+          type: string
+    
+    DraftEntry:
+      type: object
+      properties:
+        patient:
+          type: string
+        clinician_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        complaint:
+          type: string
+        findings:
+          type: string
+        current_habits:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        reports:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    TeleConEntry:
+      type: object
+      properties:
+        patient:
+          type: string
+          description: ObjectId reference of the patient
+        clinician_id:
+          type: string
+          description: ObjectId reference to the user
+        complaint:
+          type: string
+          description: complaint of the patient
+        start_time:
+          type: string
+          format: date-time
+          description: start time of the telecon
+        end_time:
+          type: string
+          format: date-time
+          description: end time of the telecon
+        findings:
+          type: string
+          description: findings of the telecon
+        curent_habits:
+          type: array
+          items:
+            type: string
+          description: current habits of the patient
+          default: []
+        updated:
+          type: boolean
+          description: whether the telecon is updated
+        reviewers:
+          type: array
+          items:
+            type: string
+            description: ObjectId reference to the User (reviewers)
+        reviews:
+          type: array
+          items:
+            type: string
+            description: ObjectId reference to the Review
+        images:
+          type: array
+          items:
+            type: string
+            description: ObjectId reference to the Image
+        reports:
+          type: array
+          items: 
+            type: string
+            description: ObjectId reference to the Report
+      required:
+        - patient
+        - clinician_id
+   
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        entry_id:
+          type: string
+        reviewer_id:
+          type: string
+        review_text:
+          type: string
+        review_date:
+          type: string
+          format: date-time
+   
+    TeleConEntryWithAssignment:
+      allOf:
+        - $ref: '#/components/schemas/TeleConEntry'
+          properties:
+            assignedAt:
+              type: string
+              format : date-time
+            checked:
+              type: boolean
+            reviewed:
+              type: boolean    
+
+    DraftImage:
+      type: object
+      properties:
+        _id:
+          type: string
+        filename:
+          type: string
+        path:
+          type: string
+        draft_entry:
+          type: string
+
+    DraftReport:
+      type: object
+      properties:
+        _id:
+          type: string
+        filename:
+          type: string
+        path:
+          type: string
+        draft_entry:
+          type: string
+    
+    imageUploadResponse:
+      type: object
+      properties:
+        telecon_entry_id: 
+          type: string
+          example: "642e422546ac21a667ea0a0d"
+        image_name: 
+          type: string
+          example: "image1.jpeg"
+        location: 
+          type: string
+          example: "Upper labial mucosa"
+        clinical_diagnosis: 
+          type: string
+          example: "Normal"
+        lesions_appear: 
+          type: boolean
+          example: true
+        annotation: 
+          type: array
+          example: []
+        predicted_cat: 
+          type: string
+          example: ""
+        _id: 
+          type: string
+          example: "669095c86782e6762ddd5f35"
+        createdAt: 
+          type: string
+          example: "2024-07-12T02:32:40.650Z"
+        updatedAt: 
+          type: string
+          example: "2024-07-12T02:32:40.650Z"
+    
+    reportUploadResponse:
+      type: object
+      properties:
+        telecon_entry_id: 
+          type: string
+          example: "642e422546ac21a667ea0a0d"
+        report_name: 
+          type: string
+          example: "report1.pdf"
+        _id: 
+          type: string
+          example: "669095c86782e6762ddd5f35"
+        createdAt: 
+          type: string
+          example: "2024-07-12T02:32:40.650Z"
+        updatedAt: 
+          type: string
+          example: "2024-07-12T02:32:40.650Z"
+    
+    consentFormUploadResponse:
+      type: object
+      properties:
+        patient_id:
+          type: string
+        clinician_id:
+          type: string
+        patient_name:
+          type: string
+        risk_factors:
+          type: array
+          items:
+            type: string
+        DOB:
+          type: string
+          format: date-time
+        gender:
+          type: string
+        histo_diagnosis:
+          type: string
+        medical_history:
+          type: array
+          items:
+            type: string
+        family_history:
+          type: array
+          items:
+            type: string
+        systemic_disease:
+          type: string
+        contact_no:
+          type: string
+        consent_form:
+          type: string
+        _id:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ImageUpdateRequest:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: The ID of the image entry
+          example: "60d21b4667d0d8992e610c85"
+        location:
+          type: string
+          description: The location of the image
+          example: "New York"
+        clinical_diagnosis:
+          type: string
+          description: The clinical diagnosis related to the image
+          example: "Diagnosis example"
+        lesions_appear:
+          type: string
+          description: Description of lesions appearance
+          example: "Lesions description"
+        annotation:
+          type: string
+          description: Annotations for the image
+          example: "Annotation example"
+    
