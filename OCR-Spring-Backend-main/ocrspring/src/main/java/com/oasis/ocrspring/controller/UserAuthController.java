@@ -158,5 +158,12 @@ public class UserAuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(false, e.getMessage()));
         }
     }
+    @PostMapping("/request-exists")
+    public ResponseEntity<?> registrationRequestExists(@RequestBody RequestDto requestDto) {
+        boolean exists = userService.registrationRequestExists(requestDto.getEmail());
+        Map<String, Object> response = new HashMap<>();
+        response.put("exists", exists);
+        return ResponseEntity.ok(response);
+    }
 
 }

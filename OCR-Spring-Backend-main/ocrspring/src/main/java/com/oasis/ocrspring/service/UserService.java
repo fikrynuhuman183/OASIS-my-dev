@@ -94,6 +94,8 @@ public class UserService
         return users.isEmpty() ? Optional.empty() : Optional.of(users);
     }
 
+
+
     public ResponseEntity<?> adminSignUp(AdminSignUpRequestDto signupRequest){
         User userName = null;
         User userEmail = null;
@@ -127,6 +129,7 @@ public class UserService
         user.setUpdatedAt(LocalDateTime.now());
         userRepo.save(user);
     }
+    
 
     public boolean deleteUser(String id) {
         if (userRepo.existsById(id)) {
@@ -139,5 +142,9 @@ public class UserService
 
     public long countUsers() {
         return userRepo.count();
+    }
+
+    public boolean registrationRequestExists(String email) {
+        return requestRepo.findByEmail(email).isPresent();
     }
 }

@@ -59,11 +59,20 @@ public class UserController {
     static String  message = "message";
 
     @GetMapping("/")
-    public ResponseEntity<?> getUser(String id) {
-
+    public ResponseEntity<?> getUser(@RequestParam String id) {
         Optional<User> user = userservice.getUserById(id);
         if (user.isPresent()) {
-            return new ResponseEntity<>(user.get(), HttpStatus.OK);
+            User u = user.get();
+            // Return a map with username, email, and role
+            return ResponseEntity.ok(Map.of(
+                "id", u.getId(),
+                "username", u.getUsername(),
+                "email", u.getEmail(),
+                "role", u.getRole(),
+                "hospital", u.getHospital(),
+                "contactNo", u.getContactNo(),
+                "availability", u.isAvailability()
+            ));
         } else {
             return new ResponseEntity<>(new ErrorResponse("User not found"), HttpStatus.NOT_FOUND);
         }
