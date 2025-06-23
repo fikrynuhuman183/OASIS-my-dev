@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -74,6 +75,20 @@ public class AdminController {
             return ResponseEntity.status(500).body(new ErrorMessage(internalServerError));
         }
     }
+    /* @GetMapping("/requests/test")
+    public ResponseEntity<?> getAllRequestsTest() {
+        try {
+            List<Request> requests = requestService.allRequestDetails();
+            List<RequestResDetailsDto> requestResDetailsDtos = new ArrayList<>();
+            for (Request request : requests) {
+                requestResDetailsDtos.add(new RequestResDetailsDto(request));
+            }
+            return ResponseEntity.ok(requestResDetailsDtos);
+        } catch (Exception e) {
+            e.printStackTrace(); // This will help you see the actual error
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    } */
 
 
     //get one request
