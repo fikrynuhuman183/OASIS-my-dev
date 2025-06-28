@@ -1,10 +1,7 @@
 package com.oasis.ocrspring.controller;
 
 
-import com.oasis.ocrspring.dto.PatientDetailsResDto;
-import com.oasis.ocrspring.dto.SearchPatientDto;
-import com.oasis.ocrspring.dto.SharedResponseDto;
-import com.oasis.ocrspring.dto.UpdatePatientDto;
+import com.oasis.ocrspring.dto.*;
 import com.oasis.ocrspring.model.Patient;
 import com.oasis.ocrspring.model.User;
 import com.oasis.ocrspring.service.PatientService;
@@ -258,4 +255,8 @@ public class PatientController {
             return ResponseEntity.status(500).body(new ErrorMessage("Internal Server Error!"));
         }
     }
+
+    
+
+    
 }

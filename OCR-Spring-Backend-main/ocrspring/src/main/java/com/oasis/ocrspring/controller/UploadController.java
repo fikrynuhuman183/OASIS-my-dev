@@ -1,6 +1,7 @@
 package com.oasis.ocrspring.controller;
 
 import com.oasis.ocrspring.dto.*;
+import com.oasis.ocrspring.model.Patient;
 import com.oasis.ocrspring.service.ImageService;
 import com.oasis.ocrspring.service.PatientService;
 import com.oasis.ocrspring.service.ReportService;
@@ -73,15 +74,25 @@ public class UploadController {
 
     @PostMapping("/patient")
     public ResponseEntity<?> addConsentForm(
-            HttpServletRequest request, HttpServletResponse response,
-            @RequestPart("data") ConsentRequestDto data,
-            @RequestPart("files") MultipartFile files
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @RequestPart("data") ConsentRequestDto data
     ) throws IOException {
         authenticationToken.authenticateRequest(request, response);
         if(!tokenService.checkPermissions(request, Collections.singletonList("300"))){
             return ResponseEntity.status(401).body(new ErrorMessage(UNAUTHORIZED_ACCESS));
         }
+
+        // Print out the user attributes for debugging
+        System.out.println("=== [Debug] request attributes: ===");
+        System.out.println("=== _id (clinician's user ID) === " + request.getAttribute("_id"));
+        // If you have a “user” object placed in request attributes:
+        System.out.println("=== user object === " + request.getAttribute("user"));
+
+        // The “_id” attribute should be your clinician's user ID in MongoDB
         String clinicianId = request.getAttribute("_id").toString();
-        return patientService.addPatient(clinicianId, data, files);
+
+        // Then pass that to your PatientService
+        return patientService.addPatient(clinicianId, data);
     }
 }

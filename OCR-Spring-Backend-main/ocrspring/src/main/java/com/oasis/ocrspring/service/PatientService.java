@@ -98,22 +98,45 @@ public  Patient findPatient(String id,String clinicianId){
 
     public ResponseEntity<?> addPatient(
             String id,
-            ConsentRequestDto data,
-            MultipartFile files) {
-        List<String> uploadedURIs = new ArrayList<>();
-
+            ConsentRequestDto data
+    ) {
         try {
+            // Check if patient ID already exists
             Patient patient = findOne(data.getPatientId(), id);
             if (patient != null) {
                 return ResponseEntity.status(401).body("Patient ID already exists");
             }
-            String fileName = StringUtils.cleanPath(Objects.requireNonNull(files.getOriginalFilename()));
-//            String fileName = data.getConsentForm();
-            return getResponse(data, files, fileName, uploadedURIs);
 
+            // Build new Patient directly, no file-handling
+            Patient newPatient = new Patient();
+            newPatient.setPatientId(data.getPatientId());
+            newPatient.setClinicianId(new ObjectId(id));
+            newPatient.setPatientName(data.getPatientName());
+            newPatient.setRiskFactors(data.getRiskFactors());
+            LocalDateTime dt = LocalDateTime.parse(
+                data.getDob(),
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME
+            );
+            newPatient.setDob(dt.toLocalDate());
+
+            newPatient.setGender(data.getGender());
+            newPatient.setHistoDiagnosis(data.getHistoDiagnosis());
+            newPatient.setMedicalHistory(data.getMedicalHistory());
+            newPatient.setFamilyHistory(data.getFamilyHistory());
+            newPatient.setSystemicDisease(data.getSystemicDisease());
+            newPatient.setContactNo(data.getContactNo());
+            // You can store the consentForm path or leave it empty
+            newPatient.setConsentForm("");
+            // Timestamps
+            LocalDateTime now = LocalDateTime.now();
+            newPatient.setCreatedAt(now);
+            newPatient.setUpdatedAt(now);
+
+            // Save patient
+            patientRepo.save(newPatient);
+            return ResponseEntity.status(200).body(new ConsentResponseDto(newPatient));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(new ErrorResponseDto("Internal " +
-                    "Server Error", e.toString()));
+            return ResponseEntity.status(500).body(new ErrorResponseDto("Internal Server Error", e.toString()));
         }
     }
 
@@ -223,5 +246,99 @@ public  Patient findPatient(String id,String clinicianId){
     public long countPatients() {
         return patientRepo.count();
     }
+
+    public Patient createPatient(CreatePatientDto createPatientDto, String clinicianId) {
+        try {
+            // Generate unique patient ID
+            String patientId = generateUniquePatientId();
+            
+            // Check if patient ID already exists
+            Patient existingPatient = findOne(patientId, clinicianId);
+            if (existingPatient != null) {
+                throw new RuntimeException("Generated patient ID already exists");
+            }
+            
+            Patient newPatient = new Patient();
+            
+            // Set basic information
+            newPatient.setPatientId(patientId);
+            newPatient.setClinicianId(new ObjectId(clinicianId));
+            newPatient.setPatientName(createPatientDto.getPatientName());
+            newPatient.setGender(createPatientDto.getGender());
+            newPatient.setContactNo(createPatientDto.getContactNo());
+            
+            // Parse and set date of birth
+            if (createPatientDto.getDob() != null && !createPatientDto.getDob().isEmpty()) {
+                try {
+                    // Handle ISO date string from Flutter
+                    OffsetDateTime offsetDateTime = OffsetDateTime.parse(createPatientDto.getDob());
+                    LocalDate date = offsetDateTime.toLocalDate();
+                    newPatient.setDob(date);
+                } catch (Exception e) {
+                    // Fallback: try parsing as LocalDate
+                    try {
+                        LocalDate date = LocalDate.parse(createPatientDto.getDob());
+                        newPatient.setDob(date);
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Invalid date format: " + createPatientDto.getDob());
+                    }
+                }
+            }
+            
+            // Convert risk factors from strings to Risk_factors objects
+            if (createPatientDto.getRiskFactors() != null && !createPatientDto.getRiskFactors().isEmpty()) {
+                List<Risk_factors> riskFactorsList = new ArrayList<>();
+                for (String riskFactor : createPatientDto.getRiskFactors()) {
+                    Risk_factors rf = new Risk_factors();
+                    rf.setHabit(riskFactor);
+                    rf.setDuration(""); // Default empty, can be updated later
+                    rf.setFrequency(""); // Default empty, can be updated later
+                    riskFactorsList.add(rf);
+                }
+                newPatient.setRiskFactors(riskFactorsList);
+            }
+            
+            // Set medical history
+            if (createPatientDto.getMedicalHistory() != null && !createPatientDto.getMedicalHistory().isEmpty()) {
+                newPatient.setMedicalHistory(Arrays.asList(createPatientDto.getMedicalHistory()));
+            }
+            
+            // Set family history
+            if (createPatientDto.getFamilyHistory() != null && !createPatientDto.getFamilyHistory().isEmpty()) {
+                newPatient.setFamilyHistory(Arrays.asList(createPatientDto.getFamilyHistory()));
+            }
+            
+            // Set systemic diseases - convert list to comma-separated string
+            if (createPatientDto.getSystemicDisease() != null && !createPatientDto.getSystemicDisease().isEmpty()) {
+                String systemicDiseaseStr = String.join(", ", createPatientDto.getSystemicDisease());
+                newPatient.setSystemicDisease(systemicDiseaseStr);
+            }
+            
+            // Set timestamps
+            LocalDateTime now = LocalDateTime.now();
+            newPatient.setCreatedAt(now);
+            newPatient.setUpdatedAt(now);
+            
+            // Set default values
+            newPatient.setHistoDiagnosis(""); // Empty initially
+            newPatient.setConsentForm(""); // Will be set when consent form is uploaded separately
+            
+            // Save and return
+            return patientRepo.save(newPatient);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create patient: " + e.getMessage(), e);
+        }
+    }
+
+    private String generateUniquePatientId() {
+        // Generate a unique patient ID
+        String prefix = "PAT";
+        long timestamp = System.currentTimeMillis();
+        int random = new Random().nextInt(1000);
+        return prefix + timestamp + String.format("%03d", random);
+    }
+
+    
 }
 
