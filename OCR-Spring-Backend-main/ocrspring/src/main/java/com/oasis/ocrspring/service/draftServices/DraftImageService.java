@@ -98,6 +98,10 @@ public class DraftImageService {
         try {
             extracted(file, fileName, imageURIs);
             DraftImage image = getImage(data);
+            // Set the location to the generated URI for the uploaded image
+            if (!imageURIs.isEmpty()) {
+                image.setLocation(imageURIs.get(imageURIs.size() - 1)); // Get the last added URI
+            }
             draftImageRepo.save(image);
             uploadedImages.add(image);
         } catch (Exception e) {
@@ -107,14 +111,19 @@ public class DraftImageService {
     }
 
     private void extracted(MultipartFile file, String fileName, List<String> imageURIs) throws IOException {
-        Path path = Paths.get(uploadDir + File.separator + fileName);
-        if (!Files.exists(path)) {
-            Files.createDirectories(path);
+        // Create the directory path first
+        Path dirPath = Paths.get(uploadDir);
+        if (!Files.exists(dirPath)) {
+            Files.createDirectories(dirPath);
         }
-        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+        
+        // Create the full file path
+        Path filePath = dirPath.resolve(fileName);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        
         //useful for creating uri to check the report
         String fileDownUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/files")
+                .path("/files/")
                 .path(fileName)
                 .toUriString();
         imageURIs.add(fileDownUri);

@@ -65,10 +65,10 @@ public class EntryController {
     @GetMapping("/get")
     public ResponseEntity<?> getAllEntries(HttpServletRequest request, HttpServletResponse response,
                                            @RequestParam(name = "page", required = false, defaultValue = "1") Integer page,
-                                           @RequestParam(name = "filter", required = false, defaultValue = "Created Date") String filter)
+                                           @RequestParam(name = "filter", required = false, defaultValue = "Created Date") String filter,
+                                           @RequestParam(name = "pageSize", required = false, defaultValue = "20") Integer pageSize)
     throws IOException{ //id is clinician Id
         // get all teleconsultation entries
-        int pageSize = 20;
         authenticationToken.authenticateRequest(request, response);
         if(!tokenService.checkPermissions(request, Collections.singletonList("300"))){
             return ResponseEntity.status(401).body(new ErrorMessage(UNAUTHORIZED_ACCESS));
@@ -315,5 +315,24 @@ public class EntryController {
         // mark as open
         return teleconService.markAsOpen(id );
     }
+
+//    // Get all entries assigned to a reviewer
+//    @GetMapping("/get/reviewer/{reviewerId}")
+//    public ResponseEntity<?> getEntriesForReviewer(
+//            HttpServletRequest request,
+//            HttpServletResponse response,
+//            @PathVariable String reviewerId,
+//            @RequestParam(name = "page", required = false, defaultValue = "1") Integer page,
+//            @RequestParam(name = "filter", required = false, defaultValue = "Created Date") String filter
+//    ) throws IOException {
+//        int pageSize = 20;
+//        authenticationToken.authenticateRequest(request, response);
+//        // You may want to check permissions for reviewers here, e.g. "200"
+//        if(!tokenService.checkPermissions(request, Collections.singletonList("200"))){
+//            return ResponseEntity.status(401).body(new ErrorMessage(UNAUTHORIZED_ACCESS));
+//        }
+//        // Call service method to get entries for reviewer
+//        return teleconService.getEntriesForReviewer(reviewerId, page, filter, pageSize);
+//    }
 }
 

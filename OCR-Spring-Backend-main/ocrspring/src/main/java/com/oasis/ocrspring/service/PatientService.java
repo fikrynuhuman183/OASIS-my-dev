@@ -142,13 +142,18 @@ public  Patient findPatient(String id,String clinicianId){
 
     private ResponseEntity<?> getResponse(ConsentRequestDto data, MultipartFile files, String fileName, List<String> uploadedURIs) {
         try {
-            Path path = Paths.get(consentFormUploadDir + File.separator + fileName);
-            if (!Files.exists(path)) {
-                Files.createDirectories(path);
+            // Create the directory path first
+            Path dirPath = Paths.get(consentFormUploadDir);
+            if (!Files.exists(dirPath)) {
+                Files.createDirectories(dirPath);
             }
-            Files.copy(files.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+            
+            // Create the full file path
+            Path filePath = dirPath.resolve(fileName);
+            Files.copy(files.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            
             String fileDownUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/files")
+                    .path("/files/")
                     .path(fileName)
                     .toUriString();
             uploadedURIs.add(fileDownUri);

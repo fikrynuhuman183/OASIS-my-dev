@@ -86,15 +86,19 @@ public class DraftReportService {
                                                                    String fileName, List<String> uploadFiles,
                                                                    List<DraftReport> uploadedReports, List<ObjectId> reportids) {
         try{
-            Path path = Paths.get(reportUploadDir + File.separator+ fileName);
-            if(!Files.exists(path)){//if the path doesn't exist create em
-                Files.createDirectories(path);
+            // Create the directory path first
+            Path dirPath = Paths.get(reportUploadDir);
+            if(!Files.exists(dirPath)){//if the path doesn't exist create em
+                Files.createDirectories(dirPath);
             }
-            Files.copy(file.getInputStream(),path, StandardCopyOption.REPLACE_EXISTING);
+            
+            // Create the full file path
+            Path filePath = dirPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             //useful for creating uri to check the report
             String fileDownUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/files")
+                    .path("/files/")
                     .path(fileName)
                     .toUriString();
             uploadFiles.add(fileDownUri);
