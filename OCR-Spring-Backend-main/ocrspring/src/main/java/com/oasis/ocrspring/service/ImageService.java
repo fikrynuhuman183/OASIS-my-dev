@@ -105,10 +105,15 @@ public class ImageService {
         try {
             creatingPathAndURI(file, fileName, imageURIs);
             Image image = getImage(data);
-            // Set the location to the generated URI for the uploaded image
+            // Store the file URI separately from user's location field
             if (!imageURIs.isEmpty()) {
-                image.setLocation(imageURIs.get(imageURIs.size() - 1)); // Get the last added URI
+                image.setFileUri(imageURIs.get(imageURIs.size() - 1)); // Store file path for serving
             }
+            
+            // Set file size and content type from the multipart file
+            image.setFileSize(file.getSize());
+            image.setContentType(file.getContentType());
+            
             imageRepo.save(image);
             uploadedImages.add(image);
         } catch (Exception e) {
@@ -171,6 +176,15 @@ public class ImageService {
             imageRepo.save(image);
         } else {
             throw new ImageNotFoundException("Image not found");
+        }
+    }
+
+    public Optional<Image> getImageById(String id) {
+        try {
+            Image image = imageRepo.findById(new ObjectId(id));
+            return Optional.ofNullable(image);
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 }

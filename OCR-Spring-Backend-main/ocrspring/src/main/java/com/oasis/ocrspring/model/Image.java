@@ -45,6 +45,9 @@ public class Image
 
     private String location;
 
+    @Field("file_uri")
+    private String fileUri;
+
     @Field("clinical_diagnosis")
     private String clinicalDiagnosis;
 
@@ -55,6 +58,12 @@ public class Image
 
     @Field("predicted_cat")
     private String predictedCat;
+
+    @Field("file_size")
+    private Long fileSize;
+
+    @Field("content_type")
+    private String contentType;
 
     @CreatedDate
     private LocalDateTime createdAt;

@@ -17,6 +17,7 @@ public class ImageRequestDto {
     private ObjectId teleconId;
     @JsonProperty("image_name")
     private String imageName;
+    @JsonProperty("location")
     private String location;
     @JsonProperty("clinical_diagnosis")
     private String clinicalDiagnosis;
