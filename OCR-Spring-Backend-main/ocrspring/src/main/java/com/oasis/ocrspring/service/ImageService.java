@@ -115,6 +115,8 @@ public class ImageService {
             image.setContentType(file.getContentType());
             
             imageRepo.save(image);
+            // Debug: print the saved image details for tracing
+            System.out.println("[ImageService] Saved Image record: imageName=" + image.getImageName() + ", fileUri=" + image.getFileUri());
             uploadedImages.add(image);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new UploadImageResponse(null, errorMessage));
@@ -124,23 +126,32 @@ public class ImageService {
 
 
     private void creatingPathAndURI(MultipartFile file, String fileName, List<String> imageURIs) throws IOException {
-        // Create the directory path first
-        Path dirPath = Paths.get(uploadDir);
-        if (!Files.exists(dirPath)) {
-            Files.createDirectories(dirPath);
-        }
-        
-        // Create the full file path
-        Path filePath = dirPath.resolve(fileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        
-        //useful for creating uri to check the report
-        String fileDownUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/files/")
-                .path(fileName)
-                .toUriString();
-        imageURIs.add(fileDownUri);
-        //How the Naming convension of the files work
+    // Resolve uploadDir to absolute path and create directories if missing
+    Path dirPath = Paths.get(uploadDir == null || uploadDir.isBlank() ? "Storage/images" : uploadDir)
+        .toAbsolutePath().normalize();
+    if (!Files.exists(dirPath)) {
+        Files.createDirectories(dirPath);
+    }
+
+    // Generate a unique filename to avoid collisions
+    String safeFileName = StringUtils.cleanPath(fileName);
+    String uniqueFileName = System.currentTimeMillis() + "_" + safeFileName;
+
+    // Create the full file path
+    Path filePath = dirPath.resolve(uniqueFileName);
+    Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+    // Log the physical path where the file was saved for debugging
+    System.out.println("[ImageService] Saved file to: " + filePath.toAbsolutePath().toString());
+    System.out.println("[ImageService] uploadDir resolved to: " + dirPath.toAbsolutePath().toString());
+
+    // useful for creating uri to check the file from frontend
+    String fileDownUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+        .path("/files/")
+        .path(uniqueFileName)
+        .toUriString();
+    imageURIs.add(fileDownUri);
+    // Naming convention: <timestamp>_originalFilename
     }
 
     private static Image getImage(ImageRequestDto data) {
