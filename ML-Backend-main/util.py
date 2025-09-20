@@ -1,3 +1,7 @@
+import torch
+from model import CustomModel
+from torchvision import transforms
+
 from dotenv import load_dotenv
 import os
 import pandas as pd
@@ -141,4 +145,26 @@ def nnPredict(image_path:str):
     img = img.resize((img_height, img_width))
     img_array = np.reshape(img, (1, img_height, img_width, 3))
     pred = model.predict(img_array)
+    return pred
+
+def nnPredict_nometa(image_path: str):
+    num_classes = 3  # adjust if needed
+    model_name = 'densenet201'  # adjust if needed
+    features = 192  # adjust if needed (should match your model)
+    model = CustomModel(num_classes=num_classes, model_name=model_name, metadata=None, features=features)
+    checkpoint = torch.load('checkpoint.ckpt', map_location=torch.device('cpu'))
+    state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint else checkpoint
+    model.load_state_dict(state_dict)
+    model.eval()
+
+    preprocess = transforms.Compose([
+        transforms.Resize((img_height, img_width)),
+        transforms.ToTensor(),
+    ])
+    img = Image.open(image_path).convert('RGB')
+    img_tensor = preprocess(img).unsqueeze(0)  # batch size 1
+
+    with torch.no_grad():
+        output = model.forward_nometa(img_tensor)
+        pred = output.cpu().numpy()
     return pred

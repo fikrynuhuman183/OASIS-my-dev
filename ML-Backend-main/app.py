@@ -20,41 +20,66 @@ img_width = 224
 def hello():
     return "Hello, World!"
 
+
+# @app.route('/classify', methods=['POST'])
+# def classify():
+#     try:
+#         filename = request.json['filename']
+#         supported_extensions = ['.jpg', '.jpeg', '.png', '']
+#         
+#         image_path = None
+#         
+#         for ext in supported_extensions:
+#             path = os.path.join(IMAGES_PATH, filename+ext)
+#             if os.path.isfile(path):
+#                 image_path = path
+#                 break
+#         
+#         if image_path is None:
+#             return jsonify({'error': 'Image not found'}), 404
+#         
+#         pred = util.nnPredict(image_path)
+#
+#         entry = util.findEntry(filename)
+#         if isinstance(entry, int):
+#             finalPred=pred[0]            
+#         else:
+#             pred_meta = util.metaPredict(entry)
+#             finalPred = util.calculate_total(pred, pred_meta)[0]
+#
+#         return jsonify({
+#             'result': {
+#                 'benign': str(finalPred[0]),
+#                 'healthy': str(finalPred[1]),
+#                 'opmd': str(finalPred[2])
+#             }})
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
+
+
+# New classify endpoint using only image and nometa util function
 @app.route('/classify', methods=['POST'])
-def classify():
+def classify_nometa():
     try:
         filename = request.json['filename']
         supported_extensions = ['.jpg', '.jpeg', '.png', '']
-        
         image_path = None
-        
         for ext in supported_extensions:
             path = os.path.join(IMAGES_PATH, filename+ext)
             if os.path.isfile(path):
                 image_path = path
                 break
-        
         if image_path is None:
             return jsonify({'error': 'Image not found'}), 404
-        
-        pred = util.nnPredict(image_path)
-
-
-        entry = util.findEntry(filename)
-        if isinstance(entry, int):
-            finalPred=pred[0]            
-        else:
-            pred_meta = util.metaPredict(entry)
-            finalPred = util.calculate_total(pred, pred_meta)[0]
-
-
-
+        pred = util.nnPredict_nometa(image_path)
+        finalPred = pred[0]
         return jsonify({
             'result': {
                 'benign': str(finalPred[0]),
                 'healthy': str(finalPred[1]),
                 'opmd': str(finalPred[2])
-            }})
+            }
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
