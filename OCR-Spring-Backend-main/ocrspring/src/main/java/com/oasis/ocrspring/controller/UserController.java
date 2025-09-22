@@ -27,7 +27,7 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/api/user/self")
+@RequestMapping("/v3/user/self")
 public class UserController {
 
     private final AuthenticationToken authenticationToken;

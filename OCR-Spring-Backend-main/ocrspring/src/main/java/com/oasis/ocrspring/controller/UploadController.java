@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/user/upload")
+@RequestMapping("/v3/user/upload")
 public class UploadController {
     private final ImageService imageService;
     private final ReportService reportServ;

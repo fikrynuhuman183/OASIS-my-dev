@@ -24,7 +24,7 @@ import java.util.*;
 
 
 @RestController
-@RequestMapping("/api/user/patient/")
+@RequestMapping("/v3/user/patient/")
 public class PatientController {
 
 

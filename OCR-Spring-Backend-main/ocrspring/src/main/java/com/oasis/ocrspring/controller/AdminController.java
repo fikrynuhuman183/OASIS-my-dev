@@ -22,7 +22,7 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/v3/admin")
 public class AdminController {
     // connect admin to the service layer
     private final TokenService tokenService;

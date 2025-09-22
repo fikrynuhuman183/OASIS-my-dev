@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/user/entry")
+@RequestMapping("/v3/user/entry")
 public class EntryController {
     private final TeleconEntriesService teleconService;
     private final AuthenticationToken authenticationToken;

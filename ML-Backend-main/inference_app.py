@@ -5,12 +5,27 @@ from flask import Flask, request, jsonify
 from torchvision import transforms
 from PIL import Image
 import sys
+import numpy as np
+import random
+
+# Set seeds for reproducibility
+def set_seeds(seed=42):
+    """Set seeds for reproducible results"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    # Make CuDNN deterministic
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+# Set seeds at startup
+set_seeds(42)
 
 # Add current directory to path so we can import files
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Create a custom modified version of the model that doesn't need metadata
-# This avoids modifying the original files/model.py
 class NoMetaModel(nn.Module):
     def __init__(self, num_classes, model_name, features_dim):
         super(NoMetaModel, self).__init__()
@@ -35,6 +50,12 @@ class NoMetaModel(nn.Module):
         # (Original model had 720 image features + 32 metadata features = 752 total)
         base_features = 720 if "mobilenetv3_large_075" in model_name else features_dim
         self.feature_projection = nn.Linear(base_features, features_dim)
+        
+        # Initialize the projection layer with consistent weights
+        # This is crucial for reproducible predictions!
+        torch.manual_seed(42)  # Ensure consistent initialization
+        nn.init.xavier_uniform_(self.feature_projection.weight)
+        nn.init.zeros_(self.feature_projection.bias)
         
         # Final FC layers - matches original model's FC layers exactly
         self.fc = nn.Sequential(
@@ -114,6 +135,10 @@ class InferenceModel:
 
     def __init__(self, ckpt_path: str):
         print(f"Initializing inference model...")
+        
+        # Set deterministic behavior for this session
+        set_seeds(42)
+        
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print(f"Using device: {device}")
         self.device = torch.device(device)
@@ -137,6 +162,14 @@ class InferenceModel:
         print(f"Missing keys: {result.missing_keys}")
         print(f"Unexpected keys: {result.unexpected_keys}")
         
+        # IMPORTANT: Warn about missing keys that could cause inconsistent predictions
+        if result.missing_keys:
+            print("⚠️  WARNING: Some layers were randomly initialized and may cause")
+            print("   inconsistent predictions across restarts:")
+            for key in result.missing_keys:
+                print(f"   - {key}")
+            print("   These layers will use consistent random initialization due to set_seeds()")
+        
         self.model.eval()
         print("Model loaded successfully and set to eval mode")
 
@@ -152,6 +185,11 @@ class InferenceModel:
     @torch.no_grad()
     def predict_from_path(self, image_path: str):
         print(f"Processing image: {image_path}")
+        
+        # Ensure deterministic behavior during inference
+        self.model.eval()  # Make sure we're in eval mode
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        
         img = Image.open(image_path).convert('RGB')
         x = self.preprocess(img).unsqueeze(0).to(self.device)
         

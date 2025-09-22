@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 @RestController
-@RequestMapping("/api/user/draftentry")
+@RequestMapping("/v3/user/draftentry")
 public class DraftEntryController {
     public static final String UNAUTHORIZED_ACCESS = "Unauthorized access";
     private final DraftEntryService draftEntryService;

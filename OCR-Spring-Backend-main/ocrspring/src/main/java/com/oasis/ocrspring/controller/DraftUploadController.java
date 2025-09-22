@@ -23,7 +23,7 @@ import java.util.List;
 import static com.oasis.ocrspring.controller.UploadController.UNAUTHORIZED_ACCESS;
 
 @RestController
-@RequestMapping("/api/user/draftupload")
+@RequestMapping("/v3/user/draftupload")
 public class DraftUploadController {
     private final AuthenticationToken authenticationToken;
     private final TokenService tokenService;

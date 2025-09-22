@@ -23,7 +23,7 @@ import java.util.Map;
 import static com.oasis.ocrspring.controller.UploadController.UNAUTHORIZED_ACCESS;
 
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/v3/dashboard")
 public class DashboardController {
 
 

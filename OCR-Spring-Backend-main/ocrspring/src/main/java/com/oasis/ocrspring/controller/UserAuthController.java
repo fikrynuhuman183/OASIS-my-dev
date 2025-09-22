@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/v3/auth")
 public class UserAuthController {
     public static final String PERMISSIONS = "permissions";
     public static final String ACCESS_TOKEN = "accessToken";

@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/admin/auth")
+@RequestMapping("/v3/admin/auth")
 public class AdminAuthController {
     private final UserService userService;
 

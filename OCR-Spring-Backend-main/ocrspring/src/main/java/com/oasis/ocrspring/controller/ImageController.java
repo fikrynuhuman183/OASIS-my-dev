@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/image")
+@RequestMapping("/v3/image")
 public class ImageController {
 
     private final ImageService imageService;
