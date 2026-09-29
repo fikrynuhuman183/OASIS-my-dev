@@ -5,13 +5,9 @@ from dotenv import load_dotenv
 import util
 
 
-
 app = Flask(__name__)
+load_dotenv()
 CORS(app)
-
-# Hardcoded images path (relative to ML-Backend-main)
-IMAGES_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'OCR-Spring-Backend-main', 'ocrspring', 'src', 'main', 'Storage', 'images'))
-print(f"IMAGES_PATH (hardcoded): {IMAGES_PATH}")
 
 img_height = 224
 img_width = 224
@@ -29,7 +25,7 @@ def classify():
         image_path = None
         
         for ext in supported_extensions:
-            path = os.path.join(IMAGES_PATH, filename+ext)
+            path = os.path.join(os.getenv('IMAGES_PATH'), filename+ext)
             if os.path.isfile(path):
                 image_path = path
                 break

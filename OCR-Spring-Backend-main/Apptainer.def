@@ -1,0 +1,27 @@
+Bootstrap: docker
+From: maven:3.9-eclipse-temurin-17
+
+%files
+    ./ocrspring /app/ocrspring
+
+%post
+    cd /app/ocrspring
+    # Build the package (skipping tests for faster build)
+    mvn clean package -DskipTests
+
+%startscript
+    cd /app/ocrspring
+    # Find and run the generated jar file
+    JAR_FILE=$(ls target/*.jar | grep -v '\.original$')
+    exec java -jar "$JAR_FILE" "$@"
+
+%runscript
+    cd /app/ocrspring
+    # Find and run the generated jar file
+    # We use a wildcard to match the generated Spring Boot fat jar, excluding the .original one
+    JAR_FILE=$(ls target/*.jar | grep -v '\.original$')
+    exec java -jar "$JAR_FILE" "$@"
+
+%labels
+    Author Antigravity
+    Description OCR Spring Backend Apptainer Image

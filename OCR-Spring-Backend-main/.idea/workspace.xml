@@ -5,7 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a7e715ea-552b-4eea-a216-b02893d7b93f" name="Changes" comment="/api/user/entry control layer">
-      <change beforePath="$PROJECT_DIR$/ocrspring/src/main/java/com/oasis/ocrspring/controller/Patient.java" beforeDir="false" afterPath="$PROJECT_DIR$/ocrspring/src/main/java/com/oasis/ocrspring/controller/Patient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ML-Backend-main/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/../ML-Backend-main/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ML-Backend-main/env.template" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ocrspring/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/ocrspring/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ocrspring/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/ocrspring/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,7 +25,7 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -50,15 +54,22 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
     "RequestMappingsPanelWidth0": "75",
     "RequestMappingsPanelWidth1": "75",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.OcrspringApplication.executor": "Profiler#1",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "main__87",
-    "last_opened_file_path": "E:/university of peradeniya/academic/Semester 4/C0200/backend of OASIS/OCR-Spring-Backend/ocrspring",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/fikry/dev/OASIS-my-dev/OCR-Spring-Backend-main/ocrspring",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -67,6 +78,7 @@
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
+    "python.packages.toolwindow.project.migrated.to.right.top.v2": "true",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
@@ -78,7 +90,9 @@
   </component>
   <component name="RunManager">
     <configuration name="OcrspringApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" temporary="true" nameIsGenerated="true">
-      <module name="OCR-Spring-Backend" />
+      <option name="ALTERNATIVE_JRE_PATH" value="21" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <module name="OCR-Spring-Backend-main" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.oasis.ocrspring.OcrspringApplication" />
       <extension name="coverage">
         <pattern>
@@ -96,6 +110,14 @@
         <item itemvalue="Spring Boot.OcrspringApplication" />
       </list>
     </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
