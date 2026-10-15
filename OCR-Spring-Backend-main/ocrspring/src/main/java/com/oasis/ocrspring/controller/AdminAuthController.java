@@ -28,10 +28,11 @@ public class AdminAuthController {
         response.sendRedirect("/swaggr-ui.html");
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> adminSignUp(@RequestBody AdminSignUpRequestDto signupRequest) {
-
-        return userService.adminSignUp(signupRequest);
-    }
+    // Disabled: this endpoint had no authentication and let anyone create a System Admin account.
+    // @PostMapping("/signup")
+    // public ResponseEntity<?> adminSignUp(@RequestBody AdminSignUpRequestDto signupRequest) {
+    //
+    //     return userService.adminSignUp(signupRequest);
+    // }
 }
 
